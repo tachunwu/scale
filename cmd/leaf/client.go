@@ -2,9 +2,15 @@ package main
 
 import (
 	"log"
+	"sync"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
+	"github.com/tachunwu/scale/pkg/jetstream"
 )
+
+var wg sync.WaitGroup
 
 func Client() {
 
@@ -17,15 +23,28 @@ func Client() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Test
 
-	js.AddStream(&nats.StreamConfig{
-		Name:     "PEBBLE",
-		Subjects: []string{"pebble"},
-		Storage:  nats.FileStorage,
-	})
+	wg.Add(8)
+	start := time.Now()
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	go MicroBench(js)
+	wg.Wait()
+	log.Println(time.Since(start).Seconds())
 
-	for i := 0; i < 10; i++ {
-		js.PublishAsync("pebble", []byte("Hello JS Async!"))
+}
+
+func MicroBench(js nats.JetStreamContext) {
+	for i := 0; i < 100000; i++ {
+		kv, _ := js.KeyValue(jetstream.BucketName)
+		k := uuid.New().String()
+		kv.Put(k, []byte("value"))
 	}
-
+	defer wg.Done()
 }

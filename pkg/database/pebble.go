@@ -115,6 +115,7 @@ func (p pebbleDB) NewBatch() batch {
 	return p.d.NewBatch()
 }
 
+// Add by testing
 func (p pebbleDB) CommitBatch(b *pebble.Batch) error {
 	return p.d.Apply(b, pebble.Sync)
 }
